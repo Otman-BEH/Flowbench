@@ -80,6 +80,9 @@ When recording is active, two CSV files are written to the same directory as `ma
 ### Sequence completion detection
 The GUI does not know when the microcontroller has finished executing a sequence. `_seq_done()` exists in the code but is never called because the PC has no feedback from the ESP32. This will be fixed when the ESP32 code is written
 
+### Time steps are not constant time apart
+Time steps have approximately a variance of up to 40ms. This is because the sampling and timing is still happening in Python with the sample random data and should be fixed when moved to microcontroller with hardware timers, a similar approach to the valve sequence compiling logic so that the data is accurately and precisely measured at the right time nad sent a bit after as that is not as important.
+
 ## Fixed issues
-### Timing Logic
-When running valve sequences on the PC via QTimer there was ±15–20ms jitter per step due to the non-real-time nature of desktop OS scheduling. This was found through the csv file by looking at the timestamps. Solved by compiling entire sequence into a JSON and sending to the microcontroller which will be much more precise with timing.
+### Valve timing Logic
+When running valve sequences on the PC via QTimer there was up to 20ms jitter per step due to the non-real-time nature of desktop OS scheduling. This was found through the csv file by looking at the timestamps. Solved by compiling entire sequence into a JSON and sending to the microcontroller which will be much more precise with timing.
