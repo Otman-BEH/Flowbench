@@ -15,8 +15,11 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 import pyqtgraph as pg
+import numpy as np
+import matplotlib.pyplot as plt
 # config - tweak these as needed
 MAX_POINTS = 200 # Amount of points in realtime graph (MAX_POINTS/(1000/UPDATE_RATE_MS)) is timeframe for realtime graph
+PROFILE_STEPS = 100  # Number of pre-computed points sent to ESP32 for servo motion profiles
 UPDATE_RATE_MS = 50  # In ms, so 50ms = 20 Hz
 CHANNELS = [
     {"name": "P1 - Pressurant",     "unit": "bar", "color": "#00d4ff", "base": 50.0, "noise": 4.3},
@@ -120,21 +123,18 @@ class SequenceStep(QFrame):
             cb = ValveCheckBox(name, VALVE_COLORS[i])
             row.addWidget(cb, stretch=1)
             if name == "Servo Valve 1":
-                # Servo valve uses a time input (seconds) instead of open/close
-                action_ctrl = QDoubleSpinBox()
-                action_ctrl.setRange(0.0, 60.0)
-                action_ctrl.setValue(1.0)
-                action_ctrl.setSingleStep(0.1)
-                action_ctrl.setDecimals(2)
-                action_ctrl.setFixedWidth(80)
-                action_ctrl.setSuffix(" s")
+                # Servo valve uses a motion profile dropdown - points are pre-computed on the Python side
+                # and sent as an array to the ESP32, which simply steps through them at interval_ms ticks
+                action_cb = QComboBox()
+                action_cb.addItems(["Linear", "Stepped", "Instant", "Exponential", "Logarithmic"])
+                action_cb.setFixedWidth(110)
             else:
-                action_ctrl = QComboBox()
-                action_ctrl.addItems(["OPEN", "CLOSE"])
-                action_ctrl.setFixedWidth(80)
-            row.addWidget(action_ctrl)
+                action_cb = QComboBox()
+                action_cb.addItems(["OPEN", "CLOSE"])
+                action_cb.setFixedWidth(80)
+            row.addWidget(action_cb)
             outer.addLayout(row)
-            self.valve_actions.append((cb, action_ctrl))
+            self.valve_actions.append((cb, action_cb))
         # Duration of Valve activation
         bot = QHBoxLayout()
         dur_lbl = QLabel("Duration:")
@@ -153,24 +153,87 @@ class SequenceStep(QFrame):
         self.inf_btn.setCheckable(True)
         self.inf_btn.setFont(QFont("Courier New", 13))
         self.inf_btn.toggled.connect(self._toggle_inf)
+        # Preview button - shows a matplotlib plot of the servo motion profile in a new window
+        self.preview_btn = QPushButton("Preview")
+        self.preview_btn.setFixedSize(56, 28)
+        self.preview_btn.setObjectName("btn_preview")
+        self.preview_btn.setFont(QFont("Courier New", 13))
+        self.preview_btn.setToolTip("Preview servo profile")
+        self.preview_btn.clicked.connect(self._show_profile_preview)
         bot.addWidget(dur_lbl)
         bot.addWidget(self.duration_spin)
         bot.addWidget(self.inf_btn)
+        bot.addWidget(self.preview_btn)
         bot.addStretch()
         outer.addLayout(bot)
     def _toggle_inf(self, checked):
         self.duration_spin.setEnabled(not checked)
         self.duration_spin.setStyleSheet("color: #333;" if checked else "")
+    def _compute_profile_points(self, profile, steps=PROFILE_STEPS):
+        """Pre-computes normalised position points (0.0 -> 1.0) for the given motion profile.
+        The ESP32 scales these to actual servo angle and steps through them at interval_ms ticks."""
+        t = np.linspace(0.0, 1.0, steps)
+        if profile == "Linear":
+            # Mathematical function goes here
+            points = t
+        elif profile == "Stepped":
+            # Mathematical function goes here
+            points = t
+        elif profile == "Instant":
+            # Mathematical function goes here
+            points = t
+        elif profile == "Exponential":
+            # Mathematical function goes here
+            points = t
+        elif profile == "Logarithmic":
+            # Mathematical function goes here
+            points = t
+        else:
+            points = t
+        return points.tolist()
+    def _show_profile_preview(self):
+        """Opens a matplotlib window showing the servo motion profile curve for the selected profile."""
+        # Find whichever servo profile is currently selected in this step
+        profile = "Linear"
+        for cb, action_cb in self.valve_actions:
+            if cb.text() == "Servo Valve 1":
+                profile = action_cb.currentText()
+                break
+        duration = self.duration_spin.value()
+        points = self._compute_profile_points(profile)
+        t_axis = np.linspace(0.0, duration, len(points))
+        fig, ax = plt.subplots(figsize=(6, 3.5))
+        fig.patch.set_facecolor("#0d0d0d")
+        ax.set_facecolor("#0d0d0d")
+        ax.plot(t_axis, [p * 100 for p in points], color="#7fff6b", linewidth=2)
+        ax.set_title(f"Servo Profile — {profile}", color="#cccccc", fontsize=11, pad=10)
+        ax.set_xlabel("Time (s)", color="#888888")
+        ax.set_ylabel("Servo Valve Opening (%)", color="#888888")
+        ax.tick_params(colors="#888888")
+        ax.spines[:].set_color("#2a2a2a")
+        ax.set_ylim(-5, 105)
+        fig.tight_layout()
+        plt.show()
     def get_step(self):
         actions = []
-        for cb, action_ctrl in self.valve_actions:
+        for cb, action_cb in self.valve_actions:
             if not cb.isChecked():
                 continue
-            if isinstance(action_ctrl, QDoubleSpinBox):
-                # Servo valve - send position as a time value in seconds
-                actions.append({"valve": cb.text(), "action": "POSITION", "value_s": action_ctrl.value()})
+            if cb.text() == "Servo Valve 1":
+                profile = action_cb.currentText()
+                duration = self.duration_spin.value()
+                points = self._compute_profile_points(profile)
+                # Pre-computed points array is sent to the ESP32 alongside the tick interval.
+                # The ESP32 steps through points[i] at each interval_ms tick, scaling to servo angle.
+                actions.append({
+                    "valve": cb.text(),
+                    "action": "PROFILE",
+                    "profile": profile,
+                    "points": [round(p, 4) for p in points],
+                    "interval_ms": int((duration * 1000) / len(points)),
+                })
             else:
-                actions.append({"valve": cb.text(), "action": action_ctrl.currentText()})
+                actions.append({"valve": cb.text(), "action": action_cb.currentText()})
         return {
             "actions": actions,
             "duration": self.duration_spin.value(),
@@ -738,6 +801,14 @@ class FlowBench(QMainWindow):
         }}
         #btn_inf:hover {{ color: {text_primary}; border-color: {border_subtle}; }}
         #btn_inf:checked {{ color: {accent_color}; border-color: {accent_color}; background: transparent; }}
+        #btn_preview {{
+            background: {bg_button_default};
+            color: {text_muted};
+            border: 1px solid {border_interactive};
+            border-radius: 4px;
+            padding: 0;
+        }}
+        #btn_preview:hover {{ color: #7fff6b; border-color: #7fff6b; }}
         QScrollArea {{ background: transparent; border: none; }}
         QScrollBar:vertical {{ background: {bg_panel_surface}; width: 6px; border-radius: 3px; }}
         QScrollBar::handle:vertical {{ background: {border_interactive}; border-radius: 3px; min-height: 20px; }}
