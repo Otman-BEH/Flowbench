@@ -118,13 +118,23 @@ class SequenceStep(QFrame):
             row = QHBoxLayout()
             row.setSpacing(8)
             cb = ValveCheckBox(name, VALVE_COLORS[i])
-            action_cb = QComboBox()
-            action_cb.addItems(["OPEN", "CLOSE"])
-            action_cb.setFixedWidth(80)
             row.addWidget(cb, stretch=1)
-            row.addWidget(action_cb)
+            if name == "Servo Valve 1":
+                # Servo valve uses a time input (seconds) instead of open/close
+                action_ctrl = QDoubleSpinBox()
+                action_ctrl.setRange(0.0, 60.0)
+                action_ctrl.setValue(1.0)
+                action_ctrl.setSingleStep(0.1)
+                action_ctrl.setDecimals(2)
+                action_ctrl.setFixedWidth(80)
+                action_ctrl.setSuffix(" s")
+            else:
+                action_ctrl = QComboBox()
+                action_ctrl.addItems(["OPEN", "CLOSE"])
+                action_ctrl.setFixedWidth(80)
+            row.addWidget(action_ctrl)
             outer.addLayout(row)
-            self.valve_actions.append((cb, action_cb))
+            self.valve_actions.append((cb, action_ctrl))
         # Duration of Valve activation
         bot = QHBoxLayout()
         dur_lbl = QLabel("Duration:")
@@ -152,10 +162,15 @@ class SequenceStep(QFrame):
         self.duration_spin.setEnabled(not checked)
         self.duration_spin.setStyleSheet("color: #333;" if checked else "")
     def get_step(self):
-        actions = [
-            {"valve": cb.text(), "action": action_cb.currentText()}
-            for cb, action_cb in self.valve_actions if cb.isChecked()
-        ]
+        actions = []
+        for cb, action_ctrl in self.valve_actions:
+            if not cb.isChecked():
+                continue
+            if isinstance(action_ctrl, QDoubleSpinBox):
+                # Servo valve - send position as a time value in seconds
+                actions.append({"valve": cb.text(), "action": "POSITION", "value_s": action_ctrl.value()})
+            else:
+                actions.append({"valve": cb.text(), "action": action_ctrl.currentText()})
         return {
             "actions": actions,
             "duration": self.duration_spin.value(),
