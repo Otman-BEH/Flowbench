@@ -6,7 +6,7 @@ FlowBench is a PyQt6-based desktop GUI designed to interface with an ESP32-contr
 
 Built by me for Bath Rocket Team to do a cold flow test of our oxidiser feed system. Currently using random values as placeholder, eventually will be using pressures acquired over Wi-Fi from microcontroller.
 
-## Running
+## Running the program
 
 Requires Python 3.10+. Install dependencies:
 ```
@@ -85,6 +85,11 @@ When recording is active, two CSV files are written to the same directory as `ma
 `time_elapsed` is elapsed seconds from the moment RECORD is pressed. The valve log only writes a row when a valve state changes, not on every update tick.
 
 ## Known Issues / Further Work
+
+### Inefficient logging implementation
+During recording, CSV files are currently opened and closed on every sample write. At 20 Hz this works without obvious issues, but it is inefficient and could cause unnecessary performance issues at higher sample rates.
+
+This will be improved by keeping file handles open for the duration of recording and flushing periodically instead of reopening the file every update cycle.
 
 ### Sequence completion detection
 The GUI does not know when the microcontroller has finished executing a sequence. `_seq_done()` exists in the code but is never called because the PC has no feedback from the ESP32. This will be fixed when the ESP32 code is written
