@@ -6,6 +6,15 @@ FlowBench is a PyQt6-based desktop GUI designed to interface with an ESP32-contr
 
 Built by me for Bath Rocket Team to do a cold flow test of our oxidiser feed system. Currently using random values as placeholder, eventually will be using pressures acquired over Wi-Fi from microcontroller.
 
+## Running
+
+Requires Python 3.10+. Install dependencies:
+```
+pip install PyQt6 pyqtgraph numpy matplotlib
+```
+
+Place all files (`main.py`, `gui.py`, `control.py`, `comms.py`, `logger.py`) in the same folder, then run main.py
+
 ## Features
 
 - **Real-time pressure monitoring**: Three pressure channels (Pressurant, Oxidiser Tank, Injector) displayed as live scrolling graphs and a combined graph with all pressure channels at once.
