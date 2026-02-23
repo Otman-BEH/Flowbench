@@ -1,0 +1,16 @@
+firmware/build/
+firmware/sdkconfig.old
+firmware/sdkconfig.bak
+firmware/managed_components/
+firmware/dependencies.lock
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env/
+.vscode/
+.idea/
+cmake-build-*/
+Thumbs.db
+.DS_Store
