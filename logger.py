@@ -18,7 +18,7 @@ class Logger:
         self.pressure_log_path = os.path.join(log_dir, f"pressure_{ts}.csv")
         self.valve_log_path = os.path.join(log_dir, f"valves_{ts}.csv")
         with open(self.pressure_log_path, 'w', newline='') as f:
-            csv.writer(f).writerow(["time_elapsed", "P1_Pressurant_bar", "P2_OxidiserTank_bar", "P3_Injector_bar"])
+            csv.writer(f).writerow(["time_elapsed", "P1_Pressurant_bar", "P2_OxidiserTank_bar", "P3_Injector_bar", "P4_Name_bar"])
         with open(self.valve_log_path, 'w', newline='') as f:
             csv.writer(f).writerow(["time_elapsed", "Solenoid_Valve_1", "Solenoid_Valve_2", "Servo_Valve_1"])
 

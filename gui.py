@@ -24,6 +24,7 @@ CHANNELS = [
     {"name": "P1 - Pressurant",     "unit": "bar", "color": "#00d4ff", "base": 50.0, "noise": 4.3},
     {"name": "P2 - Oxidiser Tank",  "unit": "bar", "color": "#ff6b35", "base": 60.5,  "noise": 7.2},
     {"name": "P3 - Injector",       "unit": "bar", "color": "#7fff6b", "base": 20.2,  "noise": 2.15},
+    {"name": "P4 - 4th Pressure",     "unit": "bar", "color": "#c77dff", "base": 12.0,  "noise": 1.8},
 ]
 VALVES = ["Solenoid Valve 1", "Solenoid Valve 2", "Servo Valve 1"]
 VALVE_COLORS = ["#00d4ff", "#ff6b35", "#7fff6b"]
@@ -317,11 +318,12 @@ class FlowBench(QMainWindow):
             c = self.combined_plot.plot(pen=pg.mkPen(color=ch["color"], width=1.8))
             self.combined_curves.append(c)
         vbox.addWidget(self.combined_plot)
-        grid.addWidget(combined, 1, 1)
+        grid.addWidget(combined, 2, 0, 1, 2)
         grid.setColumnStretch(0, 1)
         grid.setColumnStretch(1, 1)
         grid.setRowStretch(0, 1)
         grid.setRowStretch(1, 1)
+        grid.setRowStretch(2, 2)
         return grid
     def _make_graph_box(self, ch):
         container = QFrame()
