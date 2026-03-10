@@ -17,10 +17,11 @@ Place all files (`main.py`, `gui.py`, `control.py`, `comms.py`, `logger.py`) in 
 
 ## Features
 
-- **Real-time pressure monitoring**: Three pressure channels (Pressurant, Oxidiser Tank, Injector) displayed as live scrolling graphs and a combined graph with all pressure channels at once.
+- **Real-time pressure monitoring**: Four pressure channels (Pressurant, Oxidiser Tank, 2 Injector Pressures) displayed as live scrolling graphs and a combined graph with all pressure channels at once.
 - **Manual valve control**: Toggle switches for two solenoid valves and one servo valve with live OPEN/CLOSED status indicators
 - **Sequence builder**: Build multi-step valve actuation sequences with configurable durations or indefinite hold; steps can be added and removed
 - **ESP32 sequence upload**: Compiles the sequence to a JSON and sends it to the ESP32 over Wi-Fi; RUN can only enabled after a confirmed send, making the microcontroller do valve timing
+- **Valve Opening Behaviour**: Added valve opening functions so rather than it just being instant it can be stepped, exponential, whatever is programmed.
 - **Panic button**: Immediately closes all valves
 - **CSV data logging**: Pressure and valve state logged to separate CSV files; time column starts from the moment RECORD is pressed
 - **Dark/light theme toggle**: Self-Explanatory
