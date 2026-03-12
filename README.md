@@ -96,7 +96,7 @@ This will be improved by keeping file handles open for the duration of recording
 The GUI does not know when the microcontroller has finished executing a sequence. `_seq_done()` exists in the code but is never called because the PC has no feedback from the ESP32. This will be fixed when the ESP32 code is written
 
 ### Time steps are not constant time apart
-Time steps have approximately a variance of up to 40ms. This is because the sampling and timing is still happening in Python with the sample random data and should be fixed when moved to microcontroller with hardware timers, a similar approach to the valve sequence compiling logic so that the data is accurately and precisely measured at the right time nad sent a bit after as that is not as important.
+Time steps have approximately a variance of up to 40ms. This is because the sampling and timing is still happening in Python with the sample random data and should be fixed when moved to microcontroller with hardware timers, a similar approach to the valve sequence compiling logic so that the data is accurately and precisely measured at the right time and sent a bit after as that is not as important.
 
 ## Fixed issues
 ### Valve timing Logic
