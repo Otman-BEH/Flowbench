@@ -97,11 +97,6 @@ class ValveController:
             return False
         self.sent_sequence = payload
         self.sequence_sent = True
-        if self.on_seq_status_changed:
-            self.on_seq_status_changed(
-                f"Sent {payload['step_count']} step(s) to ESP32.\nPress RUN when ready.",
-                "#7fff6b"
-            )
         return True
 
     def run_sequence(self):

@@ -1,3 +1,19 @@
-idf_component_register(SRCS "main.cpp" "Wifi.cpp"
-                    INCLUDE_DIRS "."
-        REQUIRES nvs_flash esp_wifi esp_netif esp_event esp_http_server driver)
+idf_component_register(
+    SRCS
+        "main.cpp"
+        "Wifi.cpp"
+        "valves.cpp"
+        "sequence.cpp"
+        "pressures.cpp"
+    INCLUDE_DIRS
+        "."
+    REQUIRES
+        nvs_flash
+        esp_wifi
+        esp_http_server
+        esp_netif
+        esp_timer
+        driver
+        freertos
+        json
+)

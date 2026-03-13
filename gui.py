@@ -15,7 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from logger import Logger
 from control import ValveController
-from comms import Comms
+from comms import Comms, SendWorker
 
 # config - tweak these as needed
 MAX_POINTS = 200 # Amount of points in realtime graph (MAX_POINTS/(1000/UPDATE_RATE_MS)) is timeframe for realtime graph
@@ -28,18 +28,6 @@ CHANNELS = [
 ]
 VALVES = ["Solenoid Valve 1", "Solenoid Valve 2", "Servo Valve 1"]
 VALVE_COLORS = ["#00d4ff", "#ff6b35", "#7fff6b"]
-
-# Data source for graphs
-class DataSource:
-    def __init__(self):
-        self.t = 0.0
-    def read_data(self):
-        self.t += UPDATE_RATE_MS / 1000.0
-        return [
-            round(ch["base"] + ch["noise"] * math.sin(self.t * 1.5 + ch["base"])
-                  + random.gauss(0, ch["noise"] * 0.3), 3)
-            for ch in CHANNELS
-        ]
 
 # UI - Toggle switch for the valve controls
 class ToggleSwitch(QWidget):
@@ -235,6 +223,7 @@ class FlowBench(QMainWindow):
         self.seq_steps = []
         self.logger = Logger()
         self.comms = Comms()
+        self._send_worker = None
         self._build_ui()
         self.controller = ValveController(
             valve_names=VALVES,
@@ -467,10 +456,36 @@ class FlowBench(QMainWindow):
         self.comms.send_panic()
     # Sequenced activation - Adding, removing steps and start sequence
     def _seq_send(self):
-        if self.controller.send_sequence():
-            self.comms.send_sequence(self.controller.sent_sequence)
-            self.btn_run.setEnabled(True)
-            self.btn_send.setStyleSheet("color: #7fff6b; border-color: #7fff6b; background: #7fff6b12;")
+        # Validate and build payload via controller
+        if not self.controller.send_sequence():
+            return
+
+        payload = self.controller.sent_sequence
+
+        # Disable send button and show sending state while the HTTP POST is in flight
+        self.btn_send.setEnabled(False)
+        self.btn_run.setEnabled(False)
+        self._on_seq_status_changed("Sending...", "#888888")
+
+        self._send_worker = SendWorker(payload)
+        self._send_worker.succeeded.connect(self._on_send_success)
+        self._send_worker.failed.connect(self._on_send_failed)
+        self._send_worker.start()
+
+    def _on_send_success(self):
+        self.btn_run.setEnabled(True)
+        self.btn_send.setEnabled(True)
+        self.btn_send.setStyleSheet("color: #7fff6b; border-color: #7fff6b; background: #7fff6b12;")
+        self._on_seq_status_changed(
+            f"Sent {self.controller.sent_sequence['step_count']} step(s) to ESP32.\nPress RUN when ready.",
+            "#7fff6b"
+        )
+
+    def _on_send_failed(self, reason: str):
+        self.controller._reset_send_state()
+        self.btn_send.setEnabled(True)
+        self.btn_send.setStyleSheet("")
+        self._on_seq_status_changed(reason, "#ff3333")
     def _reset_send_state(self):
         self.controller._reset_send_state()
         self.btn_run.setEnabled(False)
@@ -522,10 +537,12 @@ class FlowBench(QMainWindow):
                 cb.text_lbl.setStyleSheet(f"color: {cb.color};" if self.dark_mode else f"color: #000;")
     # Called every Update Rate to update the graphs
     def _update(self):
-        values = self.source.read_data()
+        values = self.comms.read_pressures()
+        if values is None or len(values) != len(CHANNELS):
+            return
         self.t_count += UPDATE_RATE_MS / 1000.0
         x = [self.t_count - MAX_POINTS * UPDATE_RATE_MS / 1000.0 + j * UPDATE_RATE_MS / 1000.0
-             for j in range(MAX_POINTS)]
+            for j in range(MAX_POINTS)]
         for i, val in enumerate(values):
             self.buffers[i].append(val)
             self.val_labels[i].setText(f"{val:.2f} bar")
