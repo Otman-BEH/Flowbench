@@ -217,7 +217,6 @@ class FlowBench(QMainWindow):
         self.setWindowTitle("FlowBench")
         self.setMinimumSize(1200, 760)
         self.dark_mode = True
-        self.source = DataSource()
         self.buffers = [deque([0.0] * MAX_POINTS, maxlen=MAX_POINTS) for _ in CHANNELS]
         self.t_count = 0.0
         self.seq_steps = []

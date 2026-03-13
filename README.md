@@ -44,7 +44,15 @@ VALVE_COLORS = [...]    # Colours for each different valve
 
 ## Communication with ESP32
 
-FlowBench communicates with the ESP32 over Wi-Fi using HTTP. Right now there is only `# Wi-Fi send command to ESP32 goes here` and a print statement to show command was sent
+FlowBench communicates with the ESP32 over Wi-Fi using HTTP. The ESP32 runs as a Wi-Fi AP (Flowbench / 12345678) and hosts an HTTP server with the following endpoints:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/sequence` | POST | Upload compiled sequence JSON, lights LED on receipt |
+| `/run` | POST | Execute the loaded sequence |
+| `/valve` | POST | Manual valve command |
+| `/panic` | POST | Abort sequence and close all valves |
+| `/pressures` | GET | Returns latest sampled pressure values |
 
 ## JSON Sequence Payload Format
 
