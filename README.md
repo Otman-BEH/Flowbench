@@ -17,10 +17,11 @@ Place all files (`main.py`, `gui.py`, `control.py`, `comms.py`, `logger.py`) in 
 
 ## Features
 
-- **Real-time pressure monitoring**: Three pressure channels (Pressurant, Oxidiser Tank, Injector) displayed as live scrolling graphs and a combined graph with all pressure channels at once.
+- **Real-time pressure monitoring**: Four pressure channels (Pressurant, Oxidiser Tank, 2 Injector Pressures) displayed as live scrolling graphs and a combined graph with all pressure channels at once.
 - **Manual valve control**: Toggle switches for two solenoid valves and one servo valve with live OPEN/CLOSED status indicators
 - **Sequence builder**: Build multi-step valve actuation sequences with configurable durations or indefinite hold; steps can be added and removed
 - **ESP32 sequence upload**: Compiles the sequence to a JSON and sends it to the ESP32 over Wi-Fi; RUN can only enabled after a confirmed send, making the microcontroller do valve timing
+- **Valve Opening Behaviour**: Added valve opening functions so rather than it just being instant it can be stepped, exponential, whatever is programmed.
 - **Panic button**: Immediately closes all valves
 - **CSV data logging**: Pressure and valve state logged to separate CSV files; time column starts from the moment RECORD is pressed
 - **Dark/light theme toggle**: Self-Explanatory
@@ -95,7 +96,7 @@ This will be improved by keeping file handles open for the duration of recording
 The GUI does not know when the microcontroller has finished executing a sequence. `_seq_done()` exists in the code but is never called because the PC has no feedback from the ESP32. This will be fixed when the ESP32 code is written
 
 ### Time steps are not constant time apart
-Time steps have approximately a variance of up to 40ms. This is because the sampling and timing is still happening in Python with the sample random data and should be fixed when moved to microcontroller with hardware timers, a similar approach to the valve sequence compiling logic so that the data is accurately and precisely measured at the right time nad sent a bit after as that is not as important.
+Time steps have approximately a variance of up to 40ms. This is because the sampling and timing is still happening in Python with the sample random data and should be fixed when moved to microcontroller with hardware timers, a similar approach to the valve sequence compiling logic so that the data is accurately and precisely measured at the right time and sent a bit after as that is not as important.
 
 ## Fixed issues
 ### Valve timing Logic
